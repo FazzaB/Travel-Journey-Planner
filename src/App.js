@@ -6,6 +6,10 @@ import EntryListPage from './pages/EntryListPage';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import useLocalStorage from './hooks/useLocalStorage';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './pages/LogIn';
+import SignUp from './pages/SignUp';
+import Navigation from './components/Navbar';
 
 function App() {
   const [entries, setEntries] = useLocalStorage('entries', []);
@@ -33,32 +37,26 @@ function App() {
   };
 
   return (
-    <Router>
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <div className="container">
-          <Link to="/" className="navbar-brand">Travel Journal</Link>
-          <div className="navbar-nav">
-            <Link to="/add" className="nav-link">Add Entry</Link>
-            <Link to="/entries" className="nav-link">Entry List</Link>
-          </div>
+    <AuthProvider>
+      <Router>
+        <Navigation />
+        <div className="container mt-4">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route 
+              path="/add" 
+              element={<AddEntryPage addEntry={addEntry} editIndex={editIndex} entries={entries} />} 
+            />
+            <Route 
+              path="/entries" 
+              element={<EntryListPage entries={entries} onDelete={handleDelete} onEdit={handleEdit} />} 
+            />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/login" element={<Login />} />
+          </Routes>
         </div>
-      </nav>
-
-      <div className="container mt-4">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route
-            path="/add"
-            element={<AddEntryPage addEntry={addEntry} editIndex={editIndex} entries={entries} />}
-          />
-          <Route
-            path="/entries"
-            element={<EntryListPage entries={entries} onDelete={handleDelete} onEdit={handleEdit} />}
-          />
-        </Routes>
-      </div>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
-
 export default App;
