@@ -11,11 +11,13 @@ import SignUp from './pages/SignUp';
 import Navigation from './components/Navbar';
 import { getEntries, addEntry, updateEntry, deleteEntry } from './entriesService';
 import { onSnapshot, collection } from 'firebase/firestore';
-import { db } from './firebaseConfig'; 
+import { db } from './firebaseConfig';
 
 function App() {
   const [entries, setEntries] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
+
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'entries'), (snapshot) => {
@@ -26,28 +28,34 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  async function fetchEntries() {
-    const data = await getEntries();
-    setEntries(data);
-  }
+  // async function fetchEntries() {
+  //   const data = await getEntries();
+  //   setEntries(data);
+  // }
 
   const handleAddEntry = async (entry) => {
-    if (editIndex !== null) {
-      const docId = entries[editIndex].id; // Firestore doc ID
-      await updateEntry(docId, entry);
-      setEditIndex(null);
-    } else {
-      await addEntry(entry);
+    try {
+      if (editIndex !== null) {
+        const docId = entries[editIndex].id; // Firestore document ID
+        await updateEntry(docId, entry);
+        setEditIndex(null);
+      } else {
+        await addEntry(entry);
+      }
+    } catch (error) {
+      console.error('Error adding/updating entry:', error);
+      setErrorMsg('Something went wrong while adding the entry.');
     }
-    // fetchEntries();
   };
 
   const handleDelete = async (index) => {
-    const docId = entries[index].id;
-    await deleteEntry(docId);
-    // fetchEntries(); 
+    try {
+      const docId = entries[index].id;
+      await deleteEntry(docId);
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+    }
   };
-
   const handleEdit = (index) => {
     setEditIndex(index);
   };
@@ -56,32 +64,35 @@ function App() {
     <AuthProvider>
       <Router>
         <Navigation />
-        <div className="container mt-4">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route
-              path="/add"
-              element={
-                <AddEntryPage
-                  addEntry={handleAddEntry}
-                  editIndex={editIndex}
-                  entries={entries}
-                />
-              }
-            />
-            <Route
-              path="/entries"
-              element={
-                <EntryListPage
-                  entries={entries}
-                  onDelete={handleDelete}
-                  onEdit={handleEdit}
-                />
-              }
-            />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/login" element={<Login />} />
-          </Routes>
+        <div>
+          {errorMsg && <div className="alert alert-danger">{errorMsg}</div>}
+          <div className="container mt-4">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route
+                path="/add"
+                element={
+                  <AddEntryPage
+                    addEntry={handleAddEntry}
+                    editIndex={editIndex}
+                    entries={entries}
+                  />
+                }
+              />
+              <Route
+                path="/entries"
+                element={
+                  <EntryListPage
+                    entries={entries}
+                    onDelete={handleDelete}
+                    onEdit={handleEdit}
+                  />
+                }
+              />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/login" element={<Login />} />
+            </Routes>
+          </div>
         </div>
       </Router>
     </AuthProvider>
