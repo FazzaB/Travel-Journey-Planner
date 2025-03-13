@@ -157,3 +157,9 @@ form button:hover {
 .auth-container p {
   text-align: center;
 }
+
+.has-entry {
+  background-color: #ffc107;
+  color: #fff;
+  border-radius: 50%;
+}
