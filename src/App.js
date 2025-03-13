@@ -5,28 +5,35 @@ import AddEntryPage from './pages/AddEntryPage';
 import EntryListPage from './pages/EntryListPage';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/LogIn';
 import SignUp from './pages/SignUp';
 import Navigation from './components/Navbar';
-import { getEntries, addEntry, updateEntry, deleteEntry } from './entriesService';
-import { onSnapshot, collection } from 'firebase/firestore';
-import { db } from './firebaseConfig';
+import { getEntriesForUser, addEntry, updateEntry, deleteEntry } from './entriesService';
 
 function App() {
   const [entries, setEntries] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const { user } = useAuth();
 
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'entries'), (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setEntries(data);
-    });
+    if (user) {
+      fetchUserEntries(user.uid);
+    } else {
+      setEntries([]); // Clear entries when logged out
+    }
+  }, [user]);
 
-    return () => unsubscribe();
-  }, []);
+  async function fetchUserEntries(uid) {
+    try {
+      const data = await getEntriesForUser(uid);
+      setEntries(data);
+    } catch (error) {
+      console.error("Error fetching user entries:", error);
+    }
+  }
 
   // async function fetchEntries() {
   //   const data = await getEntries();
@@ -40,7 +47,7 @@ function App() {
         await updateEntry(docId, entry);
         setEditIndex(null);
       } else {
-        await addEntry(entry);
+        await addEntry({...entry, uid:user.uid});
       }
     } catch (error) {
       console.error('Error adding/updating entry:', error);
@@ -61,7 +68,6 @@ function App() {
   };
 
   return (
-    <AuthProvider>
       <Router>
         <Navigation />
         <div>
@@ -95,7 +101,6 @@ function App() {
           </div>
         </div>
       </Router>
-    </AuthProvider>
   );
 }
 

@@ -5,20 +5,23 @@ import {
     doc,
     updateDoc,
     deleteDoc,
+    query,
+    where
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 const entriesCollection = collection(db, 'entries');
 
-export async function getEntries() {
-    try {
-        const snapshot = await getDocs(entriesCollection);
-        return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+export async function getEntriesForUser(uid) {
+    try{
+    const q = query(entriesCollection, where("uid", "==", uid));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
         console.error('Error getting entries:', error);
         throw error; 
     }
-}
+  }
 
 export async function addEntry(entry) {
     try {
